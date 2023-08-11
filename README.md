@@ -6,7 +6,7 @@ gobuilder is an advanced builder for complex Go projects with many dependencies 
 ## Features
 - Build complete projects including all its dependencies
 - Use specific versions or branches of dependencies
-- Build for all Go-supported OSes and architectures (can be limited to 64-bit OSes and architectures if your project requires it)
+- Build for all Go-supported OSes and architectures
 - Do a quick build (dependencies are not updated and not built)
 
 ## Help
@@ -34,7 +34,7 @@ Usage: ./gobuild -c app_config.cfg [-e GOOS:GOARCH] [-V package@version ] [-lqvw
 ```
 
 ## Configuration file
-The configuration file for Gobuilder contains a number of crucial parameters. In the cfg directory your will find an example file.
+The configuration file for Gobuilder contains a number of crucial parameters. In the `cfg` directory your will find an example file.
 These are the fields in the configuration file:
 ```
 # The name of your project
@@ -56,11 +56,39 @@ Gobuilder will look for this configuration file in the following locations, in o
 - The `cfg` directory in the Gobuilder directory
 - The `/etc/gobuilder` directory
 
+There is also a `defaults.cfg` file in the `cfg` directory. This contains default values for the script. You can alter the defaults, if you so desire, except for the `FAILED_BUILDS` parameter.
+
 ## OS/architecture combinations
 Which OS and architecture combinations will result in a successful build will largely depend on the requirements of your application. For example, building an application
 that uses 64-bit datastructures on a 32-bit architecture will fail. 
 
 Different versions of Go may support different OS/architecture combinations.
+
+## Examples
+Show the help
+```
+gobuild -h
+```
+Show supported OS/architecture combinations for your version of Go
+```
+gobuild -s
+```
+Do a default build of your application for linux:amd64 and windows:amd64
+```
+gobuild -c application.cfg
+```
+Use version v1.5.0 of the fsnotify package instead of the default 1.6.0
+```
+gobuild -c application.cfg -V github.com/fsnotify/fsnotify@v1.5.0
+```
+Build your application for Android on ARM64 as an addition to the default builds
+```
+gobuild -c application.cfg -e android:arm64
+```
+Perform a quick build (without dependencies) for Linux only
+```
+gobuild -c application -ql
+```
 
 ## What's changed?
 
