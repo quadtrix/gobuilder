@@ -1,0 +1,15 @@
+# This is an example configuration file for gobuilder.
+# You can adapt it to your needs and save it in the cfg folder as <application>.cfg,
+# then use the -c option to point gobuild to the correct configuration file for your project
+
+# The name of your project
+PROJECT_NAME="My project"
+# The name of the application you're building with this configuration
+APPLICATION_NAME="Hello World"
+# The directory where the main.go file can be found
+MAIN_PACKAGE_DIR="/go/src/github.com/my_account/helloworld"
+# The package name that contains main.go
+MAIN_PACKAGE="github.com/my_account/helloworld"
+# Where you want your binaries to go. Gobuilder will create <os>/<architecture> subdirectories
+# under this directory for each build
+BIN_DIR="github.com/my_account/helloworld/bin"
