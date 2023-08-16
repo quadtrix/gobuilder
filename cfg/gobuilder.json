@@ -1,0 +1,12 @@
+{
+    "application_name": "Gobuild",
+    "bin_dir": "/home/nhtbrink/go/src/github.com/quadtrix/gobuilder/bin",
+    "bin_name": "gobuild",
+    "encryption": {
+        "key": "pTZ08zaQBQjYt5YMYSqcOSLUsS+sZWGGKtF/BVGSwEo=",
+        "nonce": "T4dEV7MRHluTV3yW"
+    },
+    "main_package": "github.com/quadtrix/gobuilder",
+    "main_package_dir": "/home/nhtbrink/go/src/github.com/quadtrix/gobuilder",
+    "project_name": "Gobuilder"
+}

@@ -1,2 +1,3 @@
-cfg/delta.cfg
-cfg/delta_agent.cfg
+bin
+gobuild
+gobuilder
