@@ -112,6 +112,62 @@ func showHelp() {
 	os.Exit(1)
 }
 
+func (pc *config) saveJson() (err error) {
+	savestring := fmt.Sprintf("{\n    \"project_name\": \"%s\",\n    \"application_name\": \"%s\",\n    \"main_package_dir\": \"%s\",\n    \"main_package\": \"%s\",\n    \"bin_dir\": \"%s\",\n    \"bin_name\": \"%s\"\n}", pc.projectName, pc.applicationName, pc.mainPackageDir, pc.mainPackage, pc.binDir, pc.binName)
+	return os.WriteFile("./gobuilder.json", []byte(savestring), 0640)
+}
+
+func stringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
+func yesNoPrompt(label string) bool {
+	var b byte
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" [y/n] ")
+		b, _ = r.ReadByte()
+		if b != 0 {
+			break
+		}
+	}
+	fmt.Fprint(os.Stderr, "\n")
+	if b == 'y' || b == 'Y' {
+		return true
+	} else {
+		return false
+	}
+}
+
+func interactConfigDesign() {
+	pc := config{}
+	fmt.Println("Answer the following questions to build the configuration file for your application.")
+	pc.projectName = stringPrompt("Project name:")
+	pc.applicationName = stringPrompt("Application name:")
+	if yesNoPrompt("Is the main.go file of your application in the current directory?") {
+		pc.mainPackageDir, _ = os.Getwd()
+	} else {
+		pc.mainPackageDir = stringPrompt("Directory holding main.go of your application:")
+	}
+	pc.mainPackage = stringPrompt("Name of your module:")
+	pc.binDir = stringPrompt("Path to your bin directory (for writing builds to):")
+	pc.binName = stringPrompt("Name of your binary (on Windows builds .exe gets added automatically):")
+	fmt.Println("This is what your configuration will look like:")
+	fmt.Printf("{\n    \"project_name\": \"%s\",\n    \"application_name\": \"%s\",\n    \"main_package_dir\": \"%s\",\n    \"main_package\": \"%s\",\n    \"bin_dir\": \"%s\",\n    \"bin_name\": \"%s\"\n}\n", pc.projectName, pc.applicationName, pc.mainPackageDir, pc.mainPackage, pc.binDir, pc.binName)
+	if yesNoPrompt("Do you want to save this configuration to gobuilder.json in the current directory?") {
+		pc.saveJson()
+	}
+}
+
 func showSupported() {
 	execObj := exec.Command("go", "tool", "dist", "list")
 	var output bytes.Buffer
@@ -134,13 +190,13 @@ func showSupported() {
 }
 
 func (pc *config) load(loglevel servicelogger.LogLevel) error {
-	call := os.Args[0]
+	//call := os.Args[0]
 	cwd, _ := os.Getwd()
-	lastslash := strings.LastIndex(call, "/")
-	script_path := call[:lastslash]
-	if script_path == "" {
-		script_path = "."
-	}
+	//	lastslash := strings.LastIndex(call, "/")
+	//	script_path := call[:lastslash]
+	//	if script_path == "" {
+	//		script_path = "."
+	//	}
 	slog, err := servicelogger.New("nl.quadtrix", os.Stdout.Name(), loglevel, false, "100M", 1)
 	if err != nil {
 		fmt.Printf("Error: cannot initialize logger: %s\n", err.Error())
@@ -160,18 +216,19 @@ func (pc *config) load(loglevel servicelogger.LogLevel) error {
 	slog.LogDebug("load", "gobuild", fmt.Sprintf("  %s", cwd))
 	slog.LogDebug("load", "gobuild", fmt.Sprintf("  %s/.config/gobuilder", getEnvVar("HOME")))
 	slog.LogDebug("load", "gobuild", fmt.Sprintf("  %s/cfg", cwd))
-	slog.LogDebug("load", "gobuild", fmt.Sprintf("  %s/cfg", script_path))
-	slog.LogDebug("load", "gobuild", "/etc/gobuilder")
+	//slog.LogDebug("load", "gobuild", fmt.Sprintf("  %s/cfg", script_path))
+	slog.LogDebug("load", "gobuild", "  /etc/gobuilder")
 	cfg.SetFilename("gobuilder")
 	cfg.SetFiletype(configmanager.CFT_JSON)
 	cfg.AddSearchPath(cwd)
 	cfg.AddSearchPath(getEnvVar("HOME") + "/.config/gobuilder")
 	cfg.AddSearchPath(cwd + "/cfg")
-	cfg.AddSearchPath(script_path + "/cfg")
+	//cfg.AddSearchPath(script_path + "/cfg")
 	cfg.AddSearchPath("/etc/gobuilder")
 	err = cfg.ReadConfiguration()
 	if err != nil {
 		fmt.Printf("Error: unable to load configuration: %s\n", err.Error())
+		return err
 	}
 	pc.cfg = cfg
 	pc.slog = slog
@@ -224,22 +281,30 @@ func readParams() (pc config) {
 				buildOS:   "linux",
 				buildArch: "amd64",
 			}
-			pc.builds = append([]gobuild{}, gb)
+			pc.builds = append(pc.builds, gb)
 		case "-m":
 			gb := gobuild{
 				buildOS:   "darwin",
 				buildArch: "amd64",
 			}
-			pc.builds = append([]gobuild{}, gb)
+			pc.builds = append(pc.builds, gb)
 		case "-n":
 			pc.newest = true
 		case "-q":
+			if len(pc.specialVersions) > 0 {
+				fmt.Println("-q and -V options cannot be combined")
+				os.Exit(6)
+			}
 			pc.quick = true
 		case "-s":
 			showSupported()
 		case "-v":
 			pc.verbose = true
 		case "-V":
+			if pc.quick {
+				fmt.Println("-q and -V options cannot be combined")
+				os.Exit(7)
+			}
 			if len(args) > 1 {
 				packver := args[1]
 				args = args[1:]
@@ -257,7 +322,7 @@ func readParams() (pc config) {
 				buildOS:   "windows",
 				buildArch: "amd64",
 			}
-			pc.builds = append([]gobuild{}, gb)
+			pc.builds = append(pc.builds, gb)
 		default:
 			fmt.Printf("Error: unknown parameter %s\n", args[0])
 			showHelp()
@@ -612,7 +677,14 @@ func main() {
 	}
 	err := pConfig.load(loglevel)
 	if err != nil {
-		fmt.Printf("Error: Unable to load configuration: %s", err.Error())
+		if yesNoPrompt("Configuration file gobuilder.json not found. Do you want to build one now?") {
+			interactConfigDesign()
+			err = pConfig.load(loglevel)
+			if err != nil {
+				fmt.Printf("Error loading configuration: %s\n", err.Error())
+				os.Exit(5)
+			}
+		}
 	}
 	if len(pConfig.builds) == 0 {
 		pConfig.slog.LogError("main", "gobuild", "At least one build target should be specified. Use options -e, -l, -m and/or -w")
@@ -627,4 +699,10 @@ func main() {
 		os.Exit(4)
 	}
 	pConfig.slog.LogInfo("main", "gobuild", fmt.Sprintf("Builds complete, %d build(s) failed", len(buildResult.failedbuilds)))
+	if len(buildResult.failedbuilds) > 0 {
+		pConfig.slog.LogInfo("main", "gobuild", "The following builds have failed:")
+		for _, failedbuild := range buildResult.failedbuilds {
+			pConfig.slog.LogInfo("main", "gobuild", fmt.Sprintf("%s:%s", failedbuild.buildOS, failedbuild.buildArch))
+		}
+	}
 }

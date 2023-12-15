@@ -1,7 +1,7 @@
 # gobuilder
 Advanced builder for complex Go projects
 
-gobuilder is an advanced builder for complex Go projects with many dependencies for use on Linux systems. It's a shell script so you can easily adapt it to your wishes if it doesn't completely suit your needs.
+gobuilder is an advanced builder for complex Go projects with many dependencies. It can run on any 64-bit OS Go supports.
 
 ## Features
 - Build complete projects including all its dependencies
@@ -11,52 +11,45 @@ gobuilder is an advanced builder for complex Go projects with many dependencies 
 
 ## Help
 ```
-Gobuilder v2.1.0
-Usage: ./gobuild -c app_config.cfg [-e GOOS:GOARCH] [-V package@version ] [-lqvw]
+Gobuild v3.0.0
+Usage: ./gobuild [-e GOOS:GOARCH] [-V package@version] [-lmnqvw]
        ./gobuild -h
        ./gobuild -s
-  -c app_config.cfg   The configuration file to use for this build. Gobuild will look for
-                      this file in the following locations, in order:
-                        <current_directory>
-                        <current_directory>/cfg
-                        <home_directory>/.config/gobuilder
-                        <gobuilder_directory>/cfg
-                        /etc/gobuilder
-  -e GOOS:GOARCH      Provide an extra OS/architecture to build for
-  -h                  Show this help text
-  -l                  Only build for Linux (amd64 architecture)
-  -q                  Quick build mode. This skips updating dependencies and will not build them
-  -s                  Show supported OS/architecture combinations. Not all combinations
-                      will result in a successful build
+
+  -e GOOS:GOARCH      Provide an extra OS/Architecture to build for
+  -h                  Show this help
+  -l                  Only build for linux:amd64
+  -m                  Only build for darwin:amd64 (MacOS)
+  -n                  Always use the newest commit of any dependency
+  -q                  Do a quick build (does not update or build dependencies)
+  -s                  Show Go-supported OS/Architecture combinations. Not all combinations
+                      will result in a succesful build
   -v                  Verbose mode. Shows more output
-  -V package@version  Use special version (or branch) for this dependency. Multiple -V parameters are allowed
-  -w                  Only build for Windows (amd64 architecture)
+  -V package@version  Use specific version or branch for this dependency. Multiple -V
+                      parameters are supported
+  -w                  Only build for windows:amd64
 ```
 
 ## Configuration file
-The configuration file for Gobuilder contains a number of crucial parameters. In the `cfg` directory your will find an example file.
-These are the fields in the configuration file:
+The configuration file for Gobuilder contains a number of crucial parameters. In the `cfg` directory your will find the configuration file to build Gobuilder.
+The configuration file must always be named `gobuilder.json`. These are the fields in the configuration file:
 ```
-# The name of your project
-PROJECT_NAME="My project"
-# The name of the application you're building with this configuration
-APPLICATION_NAME="Hello World"
-# The directory where the main.go file can be found
-MAIN_PACKAGE_DIR="/go/src/github.com/my_account/helloworld"
-# The package name that contains main.go
-MAIN_PACKAGE="github.com/my_account/helloworld"
-# Where you want your binaries to go. Gobuilder will create <os>/<architecture> subdirectories
-# under this directory for each build
-BIN_DIR="github.com/my_account/helloworld/bin"
+{
+    "application_name": "Your application",
+    "bin_dir": "/home/your_user/go/src/github.com/your_account/your_application/bin",
+    "bin_name": "your_application",
+    "main_package": "github.com/your_account/your_application",
+    "main_package_dir": "/home/your_user/go/src/github.com/your_account/your_application",
+    "project_name": "Your project"
+}
 ```
+You are encouraged to use absolute directories in the configuration.
 Gobuilder will look for this configuration file in the following locations, in order:
 - The current directory
 - The `cfg` directory under the current directory
 - The `.config/gobuilder` directory in your home directory
 - The `cfg` directory in the Gobuilder directory
 - The `/etc/gobuilder` directory
-
-There is also a `defaults.cfg` file in the `cfg` directory. This contains default values for the script. You can alter the defaults, if you so desire, except for the `FAILED_BUILDS` parameter.
 
 ## OS/architecture combinations
 Which OS and architecture combinations will result in a successful build will largely depend on the requirements of your application. For example, building an application
@@ -73,24 +66,33 @@ Show supported OS/architecture combinations for your version of Go
 ```
 gobuild -s
 ```
-Do a default build of your application for linux:amd64 and windows:amd64
+Do a default build of your application for linux:amd64
 ```
-gobuild -c application.cfg
+gobuild -l
 ```
-Use version v1.5.0 of the fsnotify package instead of the default 1.6.0
+Use version v1.5.0 of the fsnotify package instead of the default 1.6.0 and build for MacOS
 ```
-gobuild -c application.cfg -V github.com/fsnotify/fsnotify@v1.5.0
+gobuild -V github.com/fsnotify/fsnotify@v1.5.0 -m
 ```
-Build your application for Android on ARM64 as an addition to the default builds
+Build your application for Android on ARM64 as well as for Linux and Windows
 ```
-gobuild -c application.cfg -e android:arm64
+gobuild -e android:arm64 -lw
 ```
 Perform a quick build (without dependencies) for Linux only
 ```
-gobuild -c application -ql
+gobuild -ql
 ```
 
 ## What's changed?
 
 version 2.1.0
 - This is the first public release
+version 3.0.0
+- Rewritten in Go
+- Modified -l, -w options to not be exclusive anymore
+- Added -m option to build for MacOS
+- Added -n option to select the newest commits for dependencies
+- Removed requirement to provide configuration file on the command line
+- Changed configuration file to JSON
+- Changed configuration filename to always be the same (see documentation)
+- Added configuration option to change the binary name
