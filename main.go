@@ -493,12 +493,12 @@ func (pc *config) runBuilds() (br buildRun, err error) {
 			err = os.Remove("go.mod")
 			if err != nil {
 				pc.slog.LogError("runBuilds", "gobuild", fmt.Sprintf("Unable to remove go.mod: %s", err.Error()))
-				return br, err
+				//return br, err
 			}
 			err = os.Remove("go.sum")
 			if err != nil {
 				pc.slog.LogError("runBuilds", "gobuild", fmt.Sprintf("Unable to remove go.sum: %s", err.Error()))
-				return br, err
+				//return br, err
 			}
 		}
 		pc.slog.LogDebug("runBuilds", "gobuild", fmt.Sprintf("Running go mod init %s", pc.mainPackage))
